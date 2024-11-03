@@ -28,13 +28,13 @@ interface OptimizationState {
 }
 
 const initialSharedDetails: SharedMortgageDetails = {
-  principal: 80000,
-  maxMonthlyPayment: 1185.99,
+  principal: 200000,
+  maxMonthlyPayment: 1700,
   fixPeriod: 5,
 };
 
 const initialOption: MortgageOption = {
-  termYears: 19,
+  termYears: 20,
   interestRate: 4.08,
   annualOverpaymentPercentage: 10,
 };
