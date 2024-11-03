@@ -166,18 +166,18 @@ def main():
     # Example usage
     options = [
         {
-            'principal': 80000,
-            'term_years': 19,
+            'principal': 200000,
+            'term_years': 20,
             'interest_rate': 4.08,
-            'max_monthly_payment': 1185.99,
-            'annual_overpayment_percentage': 10  # Now configurable
+            'max_monthly_payment': 1700,
+            'annual_overpayment_percentage': 10
         },
         {
-            'principal': 80000,
+            'principal': 200000,
             'term_years': 10,
             'interest_rate': 4.08,
-            'max_monthly_payment': 1185.99,
-            'annual_overpayment_percentage': 10  # Now configurable
+            'max_monthly_payment': 1700,
+            'annual_overpayment_percentage': 10
         }
     ]
 
