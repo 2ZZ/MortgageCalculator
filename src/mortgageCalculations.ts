@@ -3,7 +3,6 @@ import {
   MortgageOption,
   MortgageCalculationResult,
   MonthlyPayment,
-  PaymentLimitations,
   PaymentCalculation,
 } from "./types";
 
@@ -13,6 +12,13 @@ const calculateBaseMonthly = (
   monthlyRate: number
 ): number => {
   const numPayments = termYears * 12;
+
+  // Handle zero interest rate specially
+  if (monthlyRate === 0) {
+    return principal / numPayments;
+  }
+
+  // Standard mortgage payment formula
   return (
     (principal * (monthlyRate * Math.pow(1 + monthlyRate, numPayments))) /
     (Math.pow(1 + monthlyRate, numPayments) - 1)
@@ -26,6 +32,11 @@ const calculateBaselineInterest = (
   monthlyRate: number,
   fixPeriodMonths: number
 ): number => {
+  // Handle zero interest rate
+  if (monthlyRate === 0) {
+    return 0;
+  }
+
   let totalInterest = 0;
   let balance = principal;
 
@@ -46,7 +57,10 @@ const calculateMonthlyPayment = (
   annualOverpaymentLimit: number,
   currentYearOverpayment: number
 ): PaymentCalculation => {
-  const monthlyInterest = remainingBalance * monthlyRate;
+  // Handle zero interest rate
+  const monthlyInterest =
+    monthlyRate === 0 ? 0 : remainingBalance * monthlyRate;
+
   const idealPayment = remainingBalance + monthlyInterest;
 
   // First, limit by monthly maximum
@@ -76,14 +90,15 @@ const calculateMonthlyPayment = (
 
   const actualOverpayment = actualPayment - baseMonthly;
 
+  // Ensure all calculated values are finite and rounded to avoid floating point errors
   return {
-    basePayment: baseMonthly,
-    idealPayment,
-    monthlyInterest,
-    limitedByMonthly,
-    limitedByAnnual,
-    actualPayment,
-    actualOverpayment,
+    basePayment: Number(baseMonthly.toFixed(2)),
+    idealPayment: Number(idealPayment.toFixed(2)),
+    monthlyInterest: Number(monthlyInterest.toFixed(2)),
+    limitedByMonthly: Number(limitedByMonthly.toFixed(2)),
+    limitedByAnnual: Number(limitedByAnnual.toFixed(2)),
+    actualPayment: Number(actualPayment.toFixed(2)),
+    actualOverpayment: Number(actualOverpayment.toFixed(2)),
   };
 };
 
@@ -153,11 +168,16 @@ export const calculateMortgagePeriod = (
     totalInterest += payment.monthlyInterest;
     totalPaid += payment.actualPayment;
 
+    // Ensure remainingBalance never goes below 0
+    remainingBalance = Math.max(0, Number(remainingBalance.toFixed(2)));
+
     monthlyPayments.push({
       month,
       payment: payment.actualPayment,
       interest: payment.monthlyInterest,
-      principal: payment.actualPayment - payment.monthlyInterest,
+      principal: Number(
+        (payment.actualPayment - payment.monthlyInterest).toFixed(2)
+      ),
       remaining: remainingBalance,
       overpayment: payment.actualOverpayment,
       limitedByMonthly: payment.limitedByMonthly,
@@ -165,26 +185,21 @@ export const calculateMortgagePeriod = (
     });
   }
 
-  const paymentLimitations: PaymentLimitations = {
-    totalLimitedByMonthly,
-    totalLimitedByAnnual,
-  };
-
-  // Calculate actual interest savings during fix period
-  const interestSaved = baselineInterest - totalInterest;
-
   return {
-    baseMonthlyPayment: baseMonthly,
-    totalInterestPaid: totalInterest,
-    totalPaid,
-    remainingBalance,
-    equityBuilt: option.principal - remainingBalance,
+    baseMonthlyPayment: Number(baseMonthly.toFixed(2)),
+    totalInterestPaid: Number(totalInterest.toFixed(2)),
+    totalPaid: Number(totalPaid.toFixed(2)),
+    remainingBalance: Number(remainingBalance.toFixed(2)),
+    equityBuilt: Number((option.principal - remainingBalance).toFixed(2)),
     monthlyPayments,
-    totalOverpayments,
-    paymentLimitations,
+    totalOverpayments: Number(totalOverpayments.toFixed(2)),
+    totalLimitedByAnnual: Number(totalLimitedByAnnual.toFixed(2)),
     analysisPeriodYears: analysisYears,
-    totalLimitedByAnnual: totalLimitedByAnnual,
-    baselineInterest,
-    interestSaved,
+    paymentLimitations: {
+      totalLimitedByMonthly: Number(totalLimitedByMonthly.toFixed(2)),
+      totalLimitedByAnnual: Number(totalLimitedByAnnual.toFixed(2)),
+    },
+    baselineInterest: Number(baselineInterest.toFixed(2)),
+    interestSaved: Number((baselineInterest - totalInterest).toFixed(2)),
   };
 };
