@@ -17,7 +17,6 @@ const MortgageSummary: React.FC<MortgageSummaryProps> = ({
   if (results.length < 2) return null;
 
   const formatCurrency = (value: number): string => `£${value.toFixed(2)}`;
-  const formatPercentage = (value: number): string => `${value.toFixed(2)}%`;
 
   const getOptionLabel = (index: number) => {
     const option = options[index];
