@@ -52,6 +52,5 @@
     "tailwindcss": "^3.4.14",
     "ts-loader": "^9.5.1",
     "typescript": "^4.9.5"
-  },
-  "homepage": "https://2zz.github.io/a4bfaa91-fa34-47df-aec4-6ad6b9d8ca2c"
+  }
 }
