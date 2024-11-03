@@ -33,7 +33,7 @@ const ComparisonCharts: React.FC<ComparisonChartsProps> = ({
     }%/${option.annualOverpaymentPercentage}%)`;
   };
 
-  // Calculate baseline interest to date...
+  // Calculate baseline interest to date for a given scenario
   const calculateBaselineInterestToDate = (
     principal: number,
     monthlyRate: number,
@@ -43,10 +43,18 @@ const ComparisonCharts: React.FC<ComparisonChartsProps> = ({
     let balance = principal;
     let totalInterest = 0;
 
+    // Only calculate up to the current month
     for (let i = 0; i <= monthIndex; i++) {
+      if (balance <= 0) break;
       const monthlyInterest = balance * monthlyRate;
       totalInterest += monthlyInterest;
-      balance = balance - (baseMonthlyPayment - monthlyInterest);
+
+      // For baseline, we only make the base monthly payment
+      const principalPayment = Math.min(
+        baseMonthlyPayment - monthlyInterest,
+        balance
+      );
+      balance = balance - principalPayment;
     }
     return totalInterest;
   };
@@ -57,6 +65,7 @@ const ComparisonCharts: React.FC<ComparisonChartsProps> = ({
     const monthlyRate1 = options[0].interestRate / 100 / 12;
     const monthlyRate2 = options[1].interestRate / 100 / 12;
 
+    // Calculate baseline interest (no overpayments) up to this month
     const baselineInterest1 = calculateBaselineInterestToDate(
       results[0].monthlyPayments[0].remaining,
       monthlyRate1,
@@ -71,20 +80,23 @@ const ComparisonCharts: React.FC<ComparisonChartsProps> = ({
       index
     );
 
+    // Calculate actual interest paid up to this month
     const actualInterest1 = results[0].monthlyPayments
       .slice(0, index + 1)
-      .reduce((sum, p) => sum + p.interest, 0);
+      .reduce((sum, p) => sum + Math.max(0, p.interest), 0);
+
     const actualInterest2 = results[1].monthlyPayments
       .slice(0, index + 1)
-      .reduce((sum, p) => sum + p.interest, 0);
+      .reduce((sum, p) => sum + Math.max(0, p.interest), 0);
 
-    const interestSaved1 = baselineInterest1 - actualInterest1;
-    const interestSaved2 = baselineInterest2 - actualInterest2;
+    // Interest saved is always non-negative: baseline minus actual
+    const interestSaved1 = Math.max(0, baselineInterest1 - actualInterest1);
+    const interestSaved2 = Math.max(0, baselineInterest2 - actualInterest2);
 
     return {
       month: payment.month,
-      balance1: payment.remaining,
-      balance2: payment2.remaining,
+      balance1: Math.max(0, payment.remaining),
+      balance2: Math.max(0, payment2.remaining),
       payment1: payment.payment,
       payment2: payment2.payment,
       interestSaved1,
@@ -160,7 +172,7 @@ const ComparisonCharts: React.FC<ComparisonChartsProps> = ({
 
       <div className="bg-gray-800 p-6 rounded-lg">
         <h3 className="text-xl font-bold mb-4">
-          Cumulative Interest Saved Over Time
+          Interest Savings Through Overpayments
         </h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={combinedData} {...commonChartProps}>
